@@ -84,6 +84,7 @@ const DraggableDroppableComponent: React.FC<{
       }}
       style={{
         margin: "10px",
+        minHeight: canHaveChildren ? "32px" : "10px",
         cursor: "move",
         border: isSelected ? "2px solid #0073bb" : "1px solid #d5dbdb",
         padding: "5px",
@@ -158,6 +159,7 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
         );
         setComponents((prev) => {
           console.log("Inside setComponents, prev are", prev);
+          console.log("Inside setComponents, item is", item);
           return [...prev, item];
         });
       } else {
@@ -373,7 +375,6 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
 
   // Only render top-level components (those without parents)
   const topLevelComponents = components.filter((comp) => !comp.parentId);
-  console.log("topLevelComponents are", topLevelComponents);
 
   // Handle click on the grid background to deselect
   const handleGridClick = (e: React.MouseEvent) => {
