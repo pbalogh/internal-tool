@@ -153,13 +153,18 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
 
       // Add the component to the grid (top level)
       if (!components.some((c) => c.id === item.id)) {
-        console.log(
-          "Inside drop and adding item to top level where existing components are",
-          components
-        );
         setComponents((prev) => {
           console.log("Inside setComponents, prev are", prev);
           console.log("Inside setComponents, item is", item);
+          console.log("Inside setComponents, item.id is", item.id);
+          console.log(
+            "Inside setComponents, ids are",
+            prev.map((thing) => thing.id)
+          );
+          if (prev.map((thing) => thing.id).includes(item.id)) {
+            console.log("THIS IS ALREADY THERE");
+            return prev;
+          }
           return [...prev, item];
         });
       } else {
