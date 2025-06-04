@@ -150,21 +150,24 @@ const simplifyComponent = (component: DraggableComponent): SimpleComponent => {
   // Extract only essential props to keep hash size manageable
   const essentialProps: Record<string, any> = {};
 
+  const childrenProps = component.children?.map(simplifyComponent);
+  essentialProps.children = childrenProps;
+
   // Include only primitive props and simple objects
   Object.entries(component.props).forEach(([key, value]) => {
     // Handle children prop specially
     if (key === "children") {
-      // If children is a string, keep it
-      if (typeof value === "string") {
-        essentialProps[key] = value;
-      }
-      // If it's an array of strings, keep it
-      else if (
-        Array.isArray(value) &&
-        value.every((item) => typeof item === "string")
-      ) {
-        essentialProps[key] = value;
-      }
+      // // If children is a string, keep it
+      // if (typeof value === "string") {
+      //   essentialProps[key] = value;
+      // }
+      // // If it's an array of strings, keep it
+      // else if (
+      //   Array.isArray(value) &&
+      //   value.every((item) => typeof item === "string")
+      // ) {
+      //   essentialProps[key] = value;
+      // }
       // Otherwise skip it (React elements)
     }
     // Skip functions and React elements for other props

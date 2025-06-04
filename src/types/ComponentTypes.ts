@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 export interface DraggableComponent {
   id: string;
@@ -6,7 +6,7 @@ export interface DraggableComponent {
   component?: React.ComponentType<any>;
   props: Record<string, any>;
   parentId?: string; // Reference to parent component
-  children?: DraggableComponent[]; // Child components for containers
+  // children?: DraggableComponent[]; // Child components for containers
 }
 
 export interface ComponentDefinition {

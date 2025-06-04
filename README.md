@@ -1,3 +1,10 @@
+### BUGS
+
+When I reload the page, components that can have children suddenly don't have children.
+
+The heart of the problem is that I've got a top-level "children" attribute of DraggableComponent,
+while really needs to just be the "children" prop.
+
 ## AWS Amplify React+Vite Starter Template
 
 This repository provides a starter template for creating applications using React+Vite and AWS Amplify, emphasizing easy setup for authentication, API, and database capabilities.
