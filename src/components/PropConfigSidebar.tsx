@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { DraggableComponent } from "../types/ComponentTypes";
-import Input from "@cloudscape-design/components/input";
 import Button from "@cloudscape-design/components/button";
-import FormField from "@cloudscape-design/components/form-field";
-import SpaceBetween from "@cloudscape-design/components/space-between";
-import Container from "@cloudscape-design/components/container";
-import Select from "@cloudscape-design/components/select";
-import Textarea from "@cloudscape-design/components/textarea";
 import Checkbox from "@cloudscape-design/components/checkbox";
+import Container from "@cloudscape-design/components/container";
 import ExpandableSection from "@cloudscape-design/components/expandable-section";
-import { Cards } from "@cloudscape-design/components";
+import FormField from "@cloudscape-design/components/form-field";
+import Input from "@cloudscape-design/components/input";
+import Select from "@cloudscape-design/components/select";
+import SpaceBetween from "@cloudscape-design/components/space-between";
+import Textarea from "@cloudscape-design/components/textarea";
+import React, { useEffect, useState } from "react";
+import { DraggableComponent } from "../types/ComponentTypes";
 
 interface PropConfigSidebarProps {
   selectedComponent?: DraggableComponent;

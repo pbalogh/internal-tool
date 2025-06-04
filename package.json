@@ -12,6 +12,8 @@
     "@babel/types": "^7.27.3",
     "@cloudscape-design/components": "^3.0.982",
     "@cloudscape-design/design-tokens": "^3.0.57",
+    "@cloudscape-design/global-styles": "^1.0.44",
+    "lodash.clonedeep": "^4.5.0",
     "react": "^18.2.0",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
@@ -20,9 +22,11 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/lodash.clonedeep": "^4.5.9",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@types/uuid": "^9.0.1",
+    "eslint-plugin-react-refresh": "^0.4.20",
     "react-scripts": "5.0.1"
   },
   "scripts": {
@@ -48,5 +52,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "overrides": {
+    "react-refresh": "0.11.0"
   }
 }

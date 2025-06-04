@@ -15,7 +15,9 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType>({
   colorMode: "light" as Mode,
-  setColorMode: () => {},
+  setColorMode: () => {
+    /* */
+  },
 });
 
 export const useTheme = () => useContext(ThemeContext);
