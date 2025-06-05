@@ -138,7 +138,7 @@ const defaultPropsMap: Record<string, Record<string, any>> = {
   Box: {
     padding: "m",
     fontSize: "body-m",
-    children: "Box content",
+    children: [],
     style: { minHeight: "100px" },
   },
   BreadcrumbGroup: {
@@ -207,13 +207,13 @@ const defaultPropsMap: Record<string, Record<string, any>> = {
   ColumnLayout: { columns: 2 },
   Container: {
     header: "Container Header",
-    children: "Container content goes here",
+    children: [],
     style: { minHeight: "100px" }, // Add minimum height
   },
   DatePicker: { placeholder: "YYYY/MM/DD" },
   ExpandableSection: {
     headerText: "Expandable section",
-    children: "Expandable content goes here",
+    children: [],
     style: { minHeight: "100px" },
   },
   FormField: { label: "Form field label" },

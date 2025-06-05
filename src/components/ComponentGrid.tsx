@@ -64,7 +64,7 @@ const DraggableDroppableComponent: React.FC<{
   // Combine drag and drop refs
   const dragDropRef = (el: HTMLDivElement | null) => {
     drag(el);
-    if (component.children !== undefined) {
+    if (Array.isArray(component.props.children)) {
       drop(el); // Only make it droppable if it can have children
     }
   };
@@ -72,7 +72,7 @@ const DraggableDroppableComponent: React.FC<{
   const Component = component.component;
 
   // Determine if this component can have children
-  const canHaveChildren = component.children !== undefined;
+  const canHaveChildren = Array.isArray(component.props.children);
 
   return (
     <div
@@ -192,10 +192,10 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
       parentComp: DraggableComponent,
       childId: string
     ): boolean => {
-      if (!parentComp.children) return false;
-
-      return parentComp.children.some(
-        (child) => child.id === childId || isDescendant(child, childId)
+      if (!parentComp.props.children) return false;
+      if (typeof parentComp.props.children === "string") return false;
+      return parentComp.props.children.some(
+        (child: any) => child.id === childId || isDescendant(child, childId)
       );
     };
 
@@ -273,21 +273,30 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
     parentId: string,
     childComponent: DraggableComponent
   ): DraggableComponent[] => {
+    console.log("updateComponentChildren and components are", components);
     return components.map((comp) => {
       if (comp.id === parentId) {
         return {
           ...comp,
-          children: [...(comp.children || []), childComponent],
+          props: {
+            ...comp.props,
+            children: [...(comp.props.children || []), childComponent],
+          },
         };
       }
-      if (comp.children && comp.children.length > 0) {
+      if (comp.props.children && comp.props.children.length > 0) {
         return {
           ...comp,
-          children: updateComponentChildren(
-            comp.children,
-            parentId,
-            childComponent
-          ),
+          props: {
+            ...comp.props,
+            children: [
+              ...updateComponentChildren(
+                comp.props.children,
+                parentId,
+                childComponent
+              ),
+            ],
+          },
         };
       }
       return comp;
@@ -299,17 +308,26 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
     components: DraggableComponent[],
     id: string
   ): DraggableComponent[] => {
-    console.log("removeComponentById and id is", id);
+    console.log(
+      "removeComponentById and id is",
+      id,
+      "and components are",
+      components
+    );
     // Filter out the component at this level
     const filteredComponents = components.filter((c) => c.id !== id);
 
     // Process children recursively
     return filteredComponents.map((comp) => {
-      if (comp.children && comp.children.length > 0) {
-        return {
-          ...comp,
-          children: removeComponentById(comp.children, id),
-        };
+      if (
+        comp.props.children &&
+        comp.props.children.length > 0 &&
+        Array.isArray(comp.props.children)
+      ) {
+        comp.props.children = comp.props.children.filter(
+          (c: any) => c.id !== id
+        );
+        removeComponentById(comp.props.children, id);
       }
       return comp;
     });
@@ -320,13 +338,35 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
     // Find the parent component
     const parent = findComponentById(components, parentId);
 
-    if (!parent || !parent.children) {
+    if (!parent || !parent.props.children) {
       return null;
     }
 
     // For SpaceBetween, we need to render children differently
     if (parent.type === "SpaceBetween") {
-      return parent.children.map((child) => {
+      console.log("About to render children, which are", parent.props.children);
+      if (Array.isArray(parent.props.children)) {
+        return parent.props.children.map((child: any) => {
+          const ChildComponent = child.component;
+          return ChildComponent ? (
+            <DraggableDroppableComponent
+              key={child.id}
+              component={child}
+              onComponentSelect={onComponentSelect}
+              onDrop={handleNestedDrop}
+              onMove={handleMoveComponent}
+              renderChildren={renderChildren}
+              isSelected={child.id === selectedComponentId}
+            />
+          ) : null;
+        });
+      }
+    }
+
+    console.log("About to render children, which are", parent.props.children);
+    // Default rendering for other container types
+    if (Array.isArray(parent.props.children)) {
+      return parent.props.children.map((child: any) => {
         const ChildComponent = child.component;
         return ChildComponent ? (
           <DraggableDroppableComponent
@@ -341,22 +381,6 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
         ) : null;
       });
     }
-
-    // Default rendering for other container types
-    return parent.children.map((child) => {
-      const ChildComponent = child.component;
-      return ChildComponent ? (
-        <DraggableDroppableComponent
-          key={child.id}
-          component={child}
-          onComponentSelect={onComponentSelect}
-          onDrop={handleNestedDrop}
-          onMove={handleMoveComponent}
-          renderChildren={renderChildren}
-          isSelected={child.id === selectedComponentId}
-        />
-      ) : null;
-    });
   };
 
   // Helper function to find a component by ID recursively
@@ -368,8 +392,12 @@ const ComponentGrid: React.FC<ComponentGridProps> = ({
       if (comp.id === id) {
         return comp;
       }
-      if (comp.children && comp.children.length > 0) {
-        const found = findComponentById(comp.children, id);
+      if (
+        comp.props.children &&
+        comp.props.children.length > 0 &&
+        Array.isArray(comp.props.children)
+      ) {
+        const found = findComponentById(comp.props.children, id);
         if (found) {
           return found;
         }

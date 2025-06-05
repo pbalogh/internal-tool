@@ -23,11 +23,16 @@ const PreviewComponent: React.FC<{
   renderChildren: (parentId: string) => React.ReactNode;
 }> = ({ component, renderChildren }) => {
   const Component = component.component;
+  console.log("In PreviewComponent, my type is", component.type);
+  console.log("In PreviewComponent, my props are", component.props);
 
   // Determine if this component can have children
-  const canHaveChildren = component.children !== undefined;
+  const canHaveChildren = component.props.children !== undefined;
 
-  if (!Component) return null;
+  if (!Component) {
+    console.error("In PreviewComponent, NO COMPONENT FOUND");
+    return null;
+  }
 
   return (
     <Component
@@ -99,7 +104,9 @@ const generateMarkup = (component: DraggableComponent, level = 0): string => {
   // Handle children
   const hasStringChildren = typeof component.props.children === "string";
   const hasComponentChildren =
-    component.children && component.children.length > 0;
+    component.props.children &&
+    component.props.children.length > 0 &&
+    Array.isArray(component.props.children);
 
   if (hasStringChildren || hasComponentChildren) {
     markup += ">\n";
@@ -110,8 +117,8 @@ const generateMarkup = (component: DraggableComponent, level = 0): string => {
     }
 
     // Add component children - with null check to satisfy TypeScript
-    if (hasComponentChildren && component.children) {
-      component.children.forEach((child) => {
+    if (hasComponentChildren && component.props.children) {
+      component.props.children.forEach((child: any) => {
         markup += generateMarkup(child, level + 1) + "\n";
       });
     }
@@ -313,13 +320,13 @@ const PreviewMode: React.FC<PreviewModeProps> = ({
     ) as t.JSXElement[];
 
     if (jsxChildren.length > 0) {
-      component.children = [];
+      component.props.children = [];
 
       // Process each child recursively
       jsxChildren.forEach((childElement) => {
         const childComponent = processJsxElement(childElement, componentId);
         if (childComponent) {
-          component.children!.push(childComponent);
+          component.props.children!.push(childComponent);
         }
       });
     }
@@ -426,13 +433,28 @@ const PreviewMode: React.FC<PreviewModeProps> = ({
     // Find the parent component
     const parent = findComponentById(components, parentId);
 
-    if (!parent || !parent.children) {
+    if (!parent || !parent.props.children) {
       return null;
     }
 
     // For SpaceBetween, we need to render children differently
     if (parent.type === "SpaceBetween") {
-      return parent.children.map((child) => (
+      if (Array.isArray(parent.props.children)) {
+        return parent.props.children.map((child: any) => (
+          <PreviewComponent
+            key={child.id}
+            component={child}
+            renderChildren={renderChildren}
+          />
+        ));
+      }
+    }
+
+    if (typeof parent.props.children === "string") return parent.props.children;
+
+    // Default rendering for other container types
+    if (Array.isArray(parent.props.children)) {
+      return parent.props.children.map((child: any) => (
         <PreviewComponent
           key={child.id}
           component={child}
@@ -440,15 +462,6 @@ const PreviewMode: React.FC<PreviewModeProps> = ({
         />
       ));
     }
-
-    // Default rendering for other container types
-    return parent.children.map((child) => (
-      <PreviewComponent
-        key={child.id}
-        component={child}
-        renderChildren={renderChildren}
-      />
-    ));
   };
 
   // Helper function to find a component by ID recursively
@@ -460,8 +473,12 @@ const PreviewMode: React.FC<PreviewModeProps> = ({
       if (comp.id === id) {
         return comp;
       }
-      if (comp.children && comp.children.length > 0) {
-        const found = findComponentById(comp.children, id);
+      if (
+        comp.props.children &&
+        comp.props.children.length > 0 &&
+        Array.isArray(comp.props.children)
+      ) {
+        const found = findComponentById(comp.props.children, id);
         if (found) {
           return found;
         }

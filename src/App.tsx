@@ -26,14 +26,17 @@ interface SimpleComponent {
   t: string; // type
   i: string; // id
   p: Record<string, any>; // simplified props
-  c?: SimpleComponent[]; // children
+  // c?: SimpleComponent[]; // children
 }
 
 // Add this to your App.tsx or a utility file
 const prepareComponentsForSerialization = (
   components: DraggableComponent[]
 ): DraggableComponent[] => {
-  console.log("prepareComponentsForSerialization");
+  console.log(
+    "prepareComponentsForSerialization and components are",
+    components
+  );
 
   return components.map((comp) => {
     const newComp = cloneDeep(comp);
@@ -68,8 +71,14 @@ const prepareComponentsForSerialization = (
     }
 
     // Handle children recursively
-    if (comp.children && comp.children.length > 0) {
-      newComp.children = prepareComponentsForSerialization(comp.children);
+    if (
+      comp.props.children &&
+      comp.props.children.length > 0 &&
+      Array.isArray(comp.props.children)
+    ) {
+      newComp.props.children = prepareComponentsForSerialization(
+        comp.props.children
+      );
     }
 
     return newComp;
@@ -136,8 +145,14 @@ const restoreFunctionsInComponents = (
     }
 
     // Handle children recursively
-    if (comp.children && comp.children.length > 0) {
-      newComp.children = restoreFunctionsInComponents(comp.children);
+    if (
+      comp.props.children &&
+      comp.props.children.length > 0 &&
+      Array.isArray(comp.props.children)
+    ) {
+      newComp.props.children = restoreFunctionsInComponents(
+        comp.props.children
+      );
     }
 
     return newComp;
@@ -147,27 +162,27 @@ const restoreFunctionsInComponents = (
 // Convert full component structure to simplified version for hash
 const simplifyComponent = (component: DraggableComponent): SimpleComponent => {
   console.log("simplifyComponent", component);
+  console.log("component.props.children is", component.props.children);
   // Extract only essential props to keep hash size manageable
   const essentialProps: Record<string, any> = {};
-
-  const childrenProps = component.children?.map(simplifyComponent);
-  essentialProps.children = childrenProps;
 
   // Include only primitive props and simple objects
   Object.entries(component.props).forEach(([key, value]) => {
     // Handle children prop specially
     if (key === "children") {
       // // If children is a string, keep it
-      // if (typeof value === "string") {
-      //   essentialProps[key] = value;
-      // }
-      // // If it's an array of strings, keep it
-      // else if (
-      //   Array.isArray(value) &&
-      //   value.every((item) => typeof item === "string")
-      // ) {
-      //   essentialProps[key] = value;
-      // }
+      if (typeof value === "string") {
+        essentialProps[key] = value;
+      }
+      // If it's an array of strings, keep it
+      else if (
+        Array.isArray(value) &&
+        value.every((item) => typeof item === "string")
+      ) {
+        essentialProps[key] = value;
+      } else if (Array.isArray(value)) {
+        essentialProps[key] = component.props.children.map(simplifyComponent);
+      }
       // Otherwise skip it (React elements)
     }
     // Skip functions and React elements for other props
@@ -214,7 +229,7 @@ const simplifyComponent = (component: DraggableComponent): SimpleComponent => {
       ].includes(component.type)
     ) {
       // Use the type name as default content if no children
-      essentialProps.children = component.type + " content";
+      essentialProps.children = [];
     }
   }
 
@@ -224,11 +239,6 @@ const simplifyComponent = (component: DraggableComponent): SimpleComponent => {
     i: component.id,
     p: essentialProps,
   };
-
-  // Add children if present
-  if (component.children && component.children.length > 0) {
-    simple.c = component.children.map(simplifyComponent);
-  }
 
   return simple;
 };
@@ -285,10 +295,14 @@ const expandComponent = (simple: SimpleComponent): DraggableComponent => {
   if (component.type === "Cards") {
     console.log("In expandComponent, component.props is", component.props);
   }
-
+  console.log("simple.p.children is", simple.p.children);
   // Add children if present
-  if (simple.c && simple.c.length > 0) {
-    component.children = simple.c.map((child) => {
+  if (
+    simple.p.children &&
+    simple.p.children.length > 0 &&
+    Array.isArray(simple.p.children)
+  ) {
+    component.props.children = simple.p.children.map((child: any) => {
       const expandedChild = expandComponent(child);
       expandedChild.parentId = component.id;
       return expandedChild;
@@ -483,14 +497,9 @@ const App: React.FC = () => {
     return components.map((comp) => {
       // If this is the component to update
       if (comp.id === id) {
-        return { ...comp, props: newProps };
-      }
-
-      // If this component has children, check them recursively
-      if (comp.children && comp.children.length > 0) {
         return {
           ...comp,
-          children: updateComponentProps(comp.children, id, newProps),
+          props: { ...newProps, children: comp.props.children },
         };
       }
 
@@ -524,8 +533,8 @@ const App: React.FC = () => {
       if (comp.id === id) {
         return comp;
       }
-      if (comp.children && comp.children.length > 0) {
-        const found = findComponentById(comp.children, id);
+      if (comp.props.children && comp.props.children.length > 0) {
+        const found = findComponentById(comp.props.children, id);
         if (found) {
           return found;
         }
@@ -539,15 +548,24 @@ const App: React.FC = () => {
     components: DraggableComponent[],
     id: string
   ): DraggableComponent[] => {
+    console.log("Inside removeComponentById, components are", components);
     // Filter out the component at this level
     const filteredComponents = components.filter((c) => c.id !== id);
 
     // Process children recursively
     return filteredComponents.map((comp) => {
-      if (comp.children && comp.children.length > 0) {
+      if (
+        comp.props.children &&
+        comp.props.children.length > 0 &&
+        Array.isArray(comp.props.children)
+      ) {
+        comp.props.children = comp.props.children.filter(
+          (c: any) => c.id !== id
+        );
+        removeComponentById(comp.props.children, id);
+
         return {
           ...comp,
-          children: removeComponentById(comp.children, id),
         };
       }
       return comp;
